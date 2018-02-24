@@ -1,0 +1,62 @@
+def pomVersion, tag
+
+pipeline {
+  agent { label 'master' }
+  stages {
+    
+    stage('Checkout') {
+        steps {
+           git url: 'https://github.com/sizgiyaev/getting-started-java.git' 
+        }
+    }
+    
+    stage ('Build') {
+        steps {
+            dir('helloworld-springboot') {
+                sh 'mvn clean install'
+            }
+        }
+    }
+    
+ 	stage ('Test') {
+      steps {
+        sh "mvn test"
+      }
+    }
+    
+    stage ('Package') {
+        steps {
+            dir('helloworld-springboot')  {
+                 sh 'mvn package'
+            }
+           
+        }
+    }
+    
+    stage ('Build Docker Image') {
+        steps {
+            script {
+                  def pom = readMavenPom file: 'helloworld-springboot/pom.xml'
+                  pomVersion = pom.version
+                  tag = pom.version.replace("-SNAPSHOT", "")
+            }
+            dir('helloworld-springboot') {
+                sh "docker build . --build-arg JAR_FILE=target/helloworld-springboot-${pomVersion}.jar -t sizgiyaev/helloworld-springboot:${tag}"
+            }
+            
+        }
+    }
+    
+    stage ('Push Docker Image') {
+        steps {
+            withCredentials([usernamePassword(credentialsId: 'docker_cloud', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
+                sh "docker login -u ${dockerHubUser} -p${dockerHubPassword}"
+                sh "docker push sizgiyaev/helloworld-springboot:${tag}"
+            }
+            
+        }
+    }
+    
+  }
+ 
+}

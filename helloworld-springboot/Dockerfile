@@ -1,4 +1,4 @@
-FROM tomcat:8-jre8
+FROM openjdk:8u151-jre-alpine
 
 ARG JAR_FILE
 

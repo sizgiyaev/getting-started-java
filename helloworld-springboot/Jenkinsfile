@@ -6,7 +6,7 @@ pipeline {
     
     stage('Checkout') {
         steps {
-           git url: 'https://github.com/sizgiyaev/getting-started-java.git' 
+            checkout scm
         }
     }
     
